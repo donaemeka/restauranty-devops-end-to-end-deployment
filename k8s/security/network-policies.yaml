@@ -1,0 +1,52 @@
+# Default Network Policy: Deny all incoming traffic by default
+# This follows the principle of least privilege
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+spec:
+  podSelector: {}              # Apply to all pods
+  policyTypes:
+  - Ingress                    # Block all incoming traffic
+  - Egress                     # Block all outgoing traffic
+
+---
+# Allow external traffic to frontend only
+# This exposes only the React app to the internet
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: client              # Only apply to frontend pods
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0       # Allow traffic from anywhere (internet)
+    ports:
+    - port: 3000              # Only allow traffic to port 3000
+
+---
+# Allow frontend to communicate with auth service
+# This enables the React app to call the auth API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+spec:
+  podSelector:
+    matchLabels:
+      app: auth               # Apply to auth service pods
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: client         # Only allow traffic from frontend pods
+    ports:
+    - port: 3001             # Only allow traffic to auth service port

@@ -1,0 +1,89 @@
+# 🍕 ITEMS MICROSERVICE - MANAGES MENU ITEMS, IMAGES, ORDERS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: items-deployment
+  labels:
+    app: items
+    tier: backend
+spec:
+  replicas: 2  # 🎯 RUN 2 COPIES FOR LOAD BALANCING
+  selector:
+    matchLabels:
+      app: items
+  template:
+    metadata:
+      labels:
+        app: items
+    spec:
+      containers:
+      - name: items
+        image: donaemeka/restauranty-items:latest  # 🐳 YOUR EXISTING IMAGE
+        ports:
+        - containerPort: 3003  # 📡 SERVICE LISTENS ON PORT 3003
+        env:
+        # 🔧 APPLICATION CONFIGURATION
+        - name: PORT
+          value: "3003"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: connection-string
+        # ☁️ CLOUDINARY CONFIG - SECURE (FROM SECRETS)
+        - name: CLOUD_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cloudinary-secret
+              key: cloud-name
+        - name: CLOUD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cloudinary-secret
+              key: api-key
+        - name: CLOUD_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cloudinary-secret
+              key: api-secret
+        # 🏥 HEALTH CHECKS - KUBERNETES MONITORS IF SERVICE IS HEALTHY
+        livenessProbe:
+          httpGet:
+            path: /api/items  # ✅ CHECKS IF SERVICE RESPONDS
+            port: 3003
+          initialDelaySeconds: 30  # ⏰ WAIT 30s AFTER STARTUP
+          periodSeconds: 10        # 🔄 CHECK EVERY 10 SECONDS
+        readinessProbe:
+          httpGet:
+            path: /api/items
+            port: 3003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+# 🔌 ITEMS SERVICE - LOAD BALANCER FOR ITEMS MICROSERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: items-service
+  labels:
+    app: items
+    tier: backend
+spec:
+  selector:
+    app: items
+  ports:
+  - port: 3003        # 📡 EXTERNAL PORT
+    targetPort: 3003  # 🎯 INTERNAL CONTAINER PORT
+  spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true    # Prevent container from running as root user
+        runAsUser: 1000       # Run as user ID 1000 (non-privileged user)
+      containers:
+      - name: [service-name]
+        securityContext:
+          allowPrivilegeEscalation: false  # Prevent privilege escalation attacks
+          capabilities:
+            drop:
+            - ALL             # Remove all Linux capabilities for security

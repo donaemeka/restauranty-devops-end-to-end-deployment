@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-deployment
+  labels:
+    app: client
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+      - name: client
+        image: donaemeka/restauranty-client:latest
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-service
+spec:
+  selector:
+    app: client
+  ports:
+  - port: 3000
+    targetPort: 3000
+  spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true    # Prevent container from running as root user
+        runAsUser: 1000       # Run as user ID 1000 (non-privileged user)
+      containers:
+      - name: [service-name]
+        securityContext:
+          allowPrivilegeEscalation: false  # Prevent privilege escalation attacks
+          capabilities:
+            drop:
+            - ALL             # Remove all Linux capabilities for security

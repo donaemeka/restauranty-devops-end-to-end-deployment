@@ -1,0 +1,20 @@
+# ⚙️ CONFIGMAP - STORES NON-SENSITIVE CONFIGURATION
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # 🏷️ APPLICATION SETTINGS
+  app.name: "Restauranty"
+  app.environment: "production"
+  app.version: "1.0.0"
+  
+  # 🔗 API ENDPOINT PATHS
+  api.auth.path: "/api/auth"
+  api.discounts.path: "/api/discounts" 
+  api.items.path: "/api/items"
+  
+  # 🕒 TIMEOUT SETTINGS
+  api.timeout: "30s"
+  db.timeout: "10s"

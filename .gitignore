@@ -1,0 +1,17 @@
+client/node_modules
+mobile/node_modules
+server/node_modules
+client/.env
+mobile/.env
+server/.env
+backend/*/.env
+backend/*/node_modules
+mobile/.expo
+config/.env
+*.log
+config/.env
+*.log
+k8s/secrets.yaml
+config/
+infrastructure/.env
+*.env

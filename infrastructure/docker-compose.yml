@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: restauranty-mongodb
+    ports: ["27017:27017"]
+    volumes: [mongodb_data:/data/db]
+
+  auth:
+    image: donaemeka/restauranty-auth:latest
+    container_name: restauranty-auth
+    ports: ["3001:3001"]
+    depends_on: [mongodb]
+
+  discounts:
+    image: donaemeka/restauranty-discounts:latest
+    container_name: restauranty-discounts
+    ports: ["3002:3002"]
+    depends_on: [mongodb]
+
+  items:
+    image: donaemeka/restauranty-items:latest
+    container_name: restauranty-items
+    ports: ["3003:3003"]
+    env_file: .env 
+    depends_on: [mongodb]
+
+  client:
+    image: donaemeka/restauranty-client:latest
+    container_name: restauranty-client
+    ports: ["3000:3000"]
+    stdin_open: true
+    tty: true
+    depends_on: [auth, discounts, items]
+
+  haproxy:
+    image: haproxy:2.6-alpine
+    container_name: restauranty-haproxy
+    volumes: [./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro]
+    ports: ["80:80"]
+    depends_on: [client, auth, discounts, items]
+
+volumes:
+  mongodb_data:
